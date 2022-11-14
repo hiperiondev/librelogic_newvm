@@ -40,7 +40,7 @@ const char *il_commands_str[32] = {
         "LT",  // 0x12
         "JMP", // 0x13
         "CAL", // 0x14
-        "POP", // 0x15
+        ")",   // 0x15
         "N16", // 0x16
         "N17", // 0x17
         "N18", // 0x18
@@ -362,59 +362,61 @@ void compile_il(char *file) {
             }
             printf("    JMP: (%s) [%04lu]\n", labels[index].label, (long unsigned int) label_line);
         } else {
-            ptr = strchr(ln_ins[1], '!');
-            if (ptr != NULL) {
-                mod_neg_arg = true;
-                index = ptr - ln_ins[1];
-                ln_ins[1][index] = ' ';
-            }
-
-            ptr = strchr(ln_ins[1], '%');
-            if (ptr == NULL) {
-                printf("ERROR: bad argument\n");
-                return;
-            }
-            index = ptr - ln_ins[1];
-            ln_ins[1][index] = ' ';
-
-            ln = trim(ln_ins[1]);
-            operand = 255;
-            for (index = 0; index < 16; index++) {
-                ptr = strstr(ln, IlOperands[index]);
-                if (ptr) {
-                    operand = index;
-                    break;
-                }
-            }
-            if(operand == 255) {
-                printf("ERROR: unknown operand\n");
-                return;
-            }
-            ln = ptr + strlen(IlOperands[operand]);
-            printf("    operand type: %d (%s) / neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
-
             word = false;
             arg_byte = 0;
             arg_bit = 0;
             arg_word = 0;
 
-            ptr = strchr(ln, '/');
-            if (ptr != NULL) {
-                index = 0;
-                ptr = strtok(ln, "/");
-                while (ptr != NULL) {
-                    strcpy(ln_ins[index++], ptr);
-                    ptr = strtok(NULL, "/");
+            ln = trim(ln_ins[1]);
+            if (strlen(ln) > 1) {
+                if (ptr != NULL) {
+                    mod_neg_arg = true;
+                    index = ptr - ln_ins[1];
+                    ln_ins[1][index] = ' ';
                 }
 
-                arg_byte = atoi(ln_ins[0]);
-                arg_bit = atoi(ln_ins[1]);
-                printf("    arg: (byte = %d / bit = %d)\n", arg_byte, arg_bit);
-            } else {
-                word = true;
-                arg_word = atoi(ln);
-                printf("    arg: (word = %d)\n", arg_word);
+                ptr = strchr(ln_ins[1], '%');
+                if (ptr == NULL) {
+                    printf("ERROR: bad argument\n");
+                    return;
+                }
+                index = ptr - ln_ins[1];
+                ln_ins[1][index] = ' ';
+
+                ln = trim(ln_ins[1]);
+                operand = 255;
+                for (index = 0; index < 16; index++) {
+                    ptr = strstr(ln, IlOperands[index]);
+                    if (ptr) {
+                        operand = index;
+                        break;
+                    }
+                }
+                if (operand == 255) {
+                    printf("ERROR: unknown operand\n");
+                    return;
+                }
+                ln = ptr + strlen(IlOperands[operand]);
+
+                ptr = strchr(ln, '/');
+                if (ptr != NULL) {
+                    index = 0;
+                    ptr = strtok(ln, "/");
+                    while (ptr != NULL) {
+                        strcpy(ln_ins[index++], ptr);
+                        ptr = strtok(NULL, "/");
+                    }
+
+                    arg_byte = atoi(ln_ins[0]);
+                    arg_bit = atoi(ln_ins[1]);
+                    printf("    arg: (byte = %d / bit = %d)\n", arg_byte, arg_bit);
+                } else {
+                    word = true;
+                    arg_word = atoi(ln);
+                    printf("    arg: (word = %d)\n", arg_word);
+                }
             }
+            printf("    operand type: %d(%s) / neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
         }
 
         // create op
@@ -596,7 +598,7 @@ uint8_t vm_execute(uint32_t *vm_program, uint32_t prg_len) {
 }
 
 int main(void) {
-    compile_il("test2.il");
+    compile_il("test.il");
 
     return EXIT_SUCCESS;
 }
