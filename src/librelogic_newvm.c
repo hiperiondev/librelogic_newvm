@@ -18,12 +18,6 @@
 
 #include "librelogic_newvm.h"
 
-#define EP(x) [x] = #x
-
-#define MAX_PROGRAM_LEN  65535
-uint32_t vm_program[MAX_PROGRAM_LEN];
-uint32_t pc = 0;
-
 const char *il_commands_str[32] = {
         "NOP", // 0x00
         "LD",  // 0x01
@@ -81,34 +75,38 @@ const char *IlOperands[17] = {
 
 typedef struct instr {
     uint32_t instr;
-    bool cond;
-    bool neg_ins;
-    bool push;
-    bool neg_arg;
-    bool word;
+    bool bit_cond;
+    bool bit_nins;
+    bool bit_push;
+    bool bit_narg;
+    bool bit_word;
+    bool bit_return;
     uint8_t il;
     uint8_t operand;
     uint8_t arg_byte;
     uint8_t arg_bit;
-    uint16_t arg_word;
-    uint32_t jmp_line;
+    uint16_t insword0;
+    uint32_t insword1;
+    uint32_t insword2;
 } instr_t;
 
 instr_t decode_instruction(uint32_t instr) {
     instr_t result;
 
-    result.instr = instr;
-    result.il = IL(instr);
-    result.operand = OPERAND(instr);
-    result.cond = COND(instr);
-    result.neg_ins = NEGATE_INS(instr);
-    result.push = PUSH(instr);
-    result.neg_arg = NEGATE_ARG(instr);
-    result.word = WORD(instr);
-    result.arg_byte = INSBYTE2(instr);
-    result.arg_bit = INSBYTE3(instr);
-    result.arg_word = INSWORD0(instr);
-    result.jmp_line = INSWORD2(instr);
+    result.instr      = instr;                 //
+    result.il         = IL(instr);             //
+    result.operand    = OPERAND(instr);        //
+    result.bit_cond   = BIT_COND(instr);       //
+    result.bit_nins   = BIT_NEGATE_INS(instr); //
+    result.bit_push   = BIT_PUSH(instr);       //
+    result.bit_return = BIT_RETURN(instr);     //
+    result.bit_narg   = BIT_NEGATE_ARG(instr); //
+    result.bit_word   = BIT_WORD(instr);       //
+    result.arg_byte   = INSBYTE2(instr);       //
+    result.arg_bit    = INSBYTE3(instr);       //
+    result.insword0   = INSWORD0(instr);       //
+    result.insword1   = INSWORD1(instr);       //
+    result.insword2   = INSWORD2(instr);       //
 
     return result;
 }
@@ -117,23 +115,23 @@ void dump_instr(uint32_t instr) {
     instr_t result = decode_instruction(instr);
 
     printf("%s", il_commands_str[result.il]);
-    if (result.neg_ins)
+    if (result.bit_nins)
         printf("!");
-    if (result.cond)
+    if (result.bit_cond)
         printf("?");
-    if (result.push)
+    if (result.bit_push)
         printf("(");
 
     printf(" ");
     if (IL(instr) == IL_JMP) {
-        printf("%lu", (long unsigned int) result.jmp_line);
+        printf("%lu", (long unsigned int) result.insword2);
     } else {
-        if (result.neg_arg)
+        if (result.bit_narg)
             printf("!");
         printf("%%%s", IlOperands[result.operand]);
 
-        if (result.word)
-            printf("%d", result.arg_word);
+        if (result.bit_word)
+            printf("%d", result.insword0);
         else
             printf("%d/%d", result.arg_byte, result.arg_bit);
     }
@@ -393,7 +391,7 @@ void compile_il(char *file) {
                 return;
             }
             ln = ptr + strlen(IlOperands[operand]);
-            printf("    operand type: %d (%s) neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
+            printf("    operand type: %d (%s) / neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
 
             word = false;
             arg_byte = 0;
@@ -411,11 +409,11 @@ void compile_il(char *file) {
 
                 arg_byte = atoi(ln_ins[0]);
                 arg_bit = atoi(ln_ins[1]);
-                printf("    arg: (byte: %d / bit: %d)\n", arg_byte, arg_bit);
+                printf("    arg: (byte = %d / bit = %d)\n", arg_byte, arg_bit);
             } else {
                 word = true;
                 arg_word = atoi(ln);
-                printf("    arg: (word: %d)\n", arg_word);
+                printf("    arg: (word = %d)\n", arg_word);
             }
         }
 
@@ -446,22 +444,27 @@ void compile_il(char *file) {
         printf("    OP: 0x%08x\n", code);
         char bin[50] = "";
         to_binary(code, bin);
+        printf("    ----------------------------------------\n");
         printf("           [        INSWORD2 (25)          ]\n");
         printf("                 [      INSWORD1 (21)      ]\n");
         printf("                        [   INSWORD0 (16)  ]\n");
         printf("    [INSBYTE0][INSBYTE1][INSBYTE2][INSBYTE3]\n");
         printf("    [IIIIICNP][RWGOOOOO][BBBBBBBB][TTTTTTTT]\n");
+        printf("    ----------------------------------------\n");
         printf("    %s\n", bin);
-        printf(" DECODE INSTR: ");
+        printf("    ----------------------------------------\n");
+        printf("    < DECODE INSTR: ");
         dump_instr(code);
-        printf("\n-----------\n");
+        printf(" >\n////////////////////////////////////////////////\n");
     }
 
 }
 
 ////////////////////////// VM /////////////////////////////
-uint8_t vm_execute() {
+uint8_t vm_execute(uint32_t *vm_program, uint32_t prg_len) {
+    uint32_t pc = 0;
     uint8_t status = 0;
+    instr_t ins;
 
     static void *dispatch_vm[] = {
             &&_IL_NOP, &&_IL_LD,
@@ -476,7 +479,9 @@ uint8_t vm_execute() {
             &&_IL_LT,  &&_IL_JMP,
             &&_IL_CAL, &&_IL_HALT
     };
-#define DISPATCH() goto *dispatch_vm[IL(vm_program[pc++])]
+#define DISPATCH() \
+    ins = decode_instruction(vm_program[pc]); \
+    goto *dispatch_vm[IL(vm_program[pc++])]
 
     DISPATCH();
     ////////////////////

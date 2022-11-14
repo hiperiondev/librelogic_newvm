@@ -51,12 +51,12 @@
 
 #define IL(x)              (x >> 27)
 #define OPERAND(x)         ((x & 0x1F0000) >> 16)
-#define COND(x)            (x & 0x4000000)
-#define NEGATE_INS(x)      (x & 0x2000000)
-#define PUSH(x)            (x & 0x1000000)
-#define RETURN(x)          (x & 0x800000)
-#define WORD(x)            (x & 0x400000)
-#define NEGATE_ARG(x)      (x & 0x200000)
+#define BIT_COND(x)        (x & 0x4000000)
+#define BIT_NEGATE_INS(x)  (x & 0x2000000)
+#define BIT_PUSH(x)        (x & 0x1000000)
+#define BIT_RETURN(x)      (x & 0x800000)
+#define BIT_WORD(x)        (x & 0x400000)
+#define BIT_NEGATE_ARG(x)  (x & 0x200000)
 
 #define SET_IL(i, v)       (i = (i | (v << 27)))
 #define SET_OPERAND(i, v)  (i = (i | (v << 16)))
