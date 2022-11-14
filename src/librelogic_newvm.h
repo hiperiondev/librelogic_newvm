@@ -2,8 +2,7 @@
  LibreLogic : a free PLC library
  Copyright (C) 2022, Antonis K. (kalamara AT ceid DOT upatras DOT gr)
 
- New VM: 2022 Emiliano Augusto Gonzalez
- ( egonzalez . hiperion @ gmail . com )
+ New VM: 2022 Emiliano Augusto Gonzalez ( egonzalez . hiperion @ gmail . com )
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -22,9 +21,10 @@
 #ifndef LIBRELOGIC_NEWVM_H_
 #define LIBRELOGIC_NEWVM_H_
 
-//#define DEBUG
+#define DEBUG
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // VM INSTR
 //        [        INSWORD2 (25)          ]
@@ -43,22 +43,22 @@
 // B: byte
 // T: bit
 
-#define INSBYTE0(x)        ((x & 0xFF000000) >> 24)
-#define INSBYTE1(x)        ((x & 0x00FF0000) >> 16)
-#define INSBYTE2(x)        ((x & 0x0000FF00) >> 8)
-#define INSBYTE3(x)        (x & 0xFF)
-#define INSWORD0(x)        (x & 0xFFFF)
-#define INSWORD1(x)        (x & 0x1FFFFF)
-#define INSWORD2(x)        (x & 0x1FFFFFF)
+#define INSBYTE0(x)            ((x & 0xFF000000) >> 24)
+#define INSBYTE1(x)            ((x & 0x00FF0000) >> 16)
+#define INSBYTE2(x)            ((x & 0x0000FF00) >> 8)
+#define INSBYTE3(x)            (x & 0xFF)
+#define INSWORD0(x)            (x & 0xFFFF)
+#define INSWORD1(x)            (x & 0x1FFFFF)
+#define INSWORD2(x)            (x & 0x1FFFFFF)
 
-#define IL(x)              (x >> 27)
-#define OPERAND(x)         ((x & 0x1F0000) >> 16)
-#define BIT_COND(x)        (x & 0x4000000)
-#define BIT_NEGATE_INS(x)  (x & 0x2000000)
-#define BIT_PUSH(x)        (x & 0x1000000)
-#define BIT_RETURN(x)      (x & 0x800000)
-#define BIT_WORD(x)        (x & 0x400000)
-#define BIT_NEGATE_ARG(x)  (x & 0x200000)
+#define IL(x)                  (x >> 27)
+#define OPERAND(x)             ((x & 0x1F0000) >> 16)
+#define BIT_COND(x)            (x & 0x4000000)
+#define BIT_NEGATE_INS(x)      (x & 0x2000000)
+#define BIT_PUSH(x)            (x & 0x1000000)
+#define BIT_RETURN(x)          (x & 0x800000)
+#define BIT_WORD(x)            (x & 0x400000)
+#define BIT_NEGATE_ARG(x)      (x & 0x200000)
 
 #define SET_IL(i, v)           (i = (i | (v << 27)))
 #define SET_OPERAND(i, v)      (i = (i | (v << 16)))
@@ -75,7 +75,6 @@
 #define SET_BYTE_VAL(i, v)     (i = (i | ((v & 0xff) << 8)))
 
 #define INSTRUCTION_DECODE(v, ins) \
-    v.instr      = ins;                 \
     v.il         = IL(ins);             \
     v.operand    = OPERAND(ins);        \
     v.bit_cond   = BIT_COND(ins);       \
@@ -96,6 +95,22 @@
 #else
     #define DBG_PRINT(fmt, args...)
 #endif
+
+typedef struct instr {
+        bool bit_cond;   //
+        bool bit_nins;   //
+        bool bit_push;   //
+        bool bit_narg;   //
+        bool bit_word;   //
+        bool bit_return; //
+     uint8_t il;         //
+     uint8_t operand;    //
+     uint8_t arg_byte;   //
+     uint8_t arg_bit;    //
+    uint16_t insword0;   //
+    uint32_t insword1;   //
+    uint32_t insword2;   //
+} instr_t;
 
 typedef enum IL_COMMANDS {
 //   instr  //       | modifiers |  description
@@ -157,6 +172,6 @@ typedef enum IL_OPERANDS {
     OP_END,          // 0x12 |
 } il_operands_t;
 
-
+uint8_t vm_execute(uint32_t *vm_program, uint32_t prg_len);
 
 #endif /* LIBRELOGIC_NEWVM_H_ */
