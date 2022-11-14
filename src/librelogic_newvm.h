@@ -22,6 +22,8 @@
 #ifndef LIBRELOGIC_NEWVM_H_
 #define LIBRELOGIC_NEWVM_H_
 
+//#define DEBUG
+
 #include <stdint.h>
 
 // VM INSTR
@@ -87,6 +89,13 @@
     v.insword0   = INSWORD0(ins);       \
     v.insword1   = INSWORD1(ins);       \
     v.insword2   = INSWORD2(ins);
+
+#ifdef DEBUG
+    #define DBG_PRINT(fmt, args...)  \
+                fprintf(stderr, "" fmt, ##args)
+#else
+    #define DBG_PRINT(fmt, args...)
+#endif
 
 typedef enum IL_COMMANDS {
 //   instr  //       | modifiers |  description

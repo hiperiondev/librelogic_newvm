@@ -74,20 +74,20 @@ const char *IlOperands[17] = {
 };
 
 typedef struct instr {
-    uint32_t instr;
-    bool bit_cond;
-    bool bit_nins;
-    bool bit_push;
-    bool bit_narg;
-    bool bit_word;
-    bool bit_return;
-    uint8_t il;
-    uint8_t operand;
-    uint8_t arg_byte;
-    uint8_t arg_bit;
-    uint16_t insword0;
-    uint32_t insword1;
-    uint32_t insword2;
+    uint32_t instr;      //
+        bool bit_cond;   //
+        bool bit_nins;   //
+        bool bit_push;   //
+        bool bit_narg;   //
+        bool bit_word;   //
+        bool bit_return; //
+     uint8_t il;         //
+     uint8_t operand;    //
+     uint8_t arg_byte;   //
+     uint8_t arg_bit;    //
+    uint16_t insword0;   //
+    uint32_t insword1;   //
+    uint32_t insword2;   //
 } instr_t;
 
 void dump_instr(uint32_t instr) {
@@ -289,6 +289,7 @@ void compile_il(char *file) {
 
         instr = 255;
 
+        // search flags
         strupp(ln_ins[0]);
         ptr = strchr(ln_ins[0], '!');
         if (ptr != NULL) {
@@ -311,6 +312,7 @@ void compile_il(char *file) {
             ln_ins[0][index] = ' ';
         }
 
+        // search instruction
         ln = trim(ln_ins[0]);
         for (index = 0; index < 32; index++) {
             if (!strcmp(ln, il_commands_str[index])) {
@@ -322,8 +324,9 @@ void compile_il(char *file) {
             printf("ERROR: unknown instruction\n");
             return;
         }
-        printf("    instr: %d(%s) / neg: %d / cond: %d / push:%d\n", instr, il_commands_str[instr], mod_neg_ins, mod_cond, mod_push);
+        DBG_PRINT("    instr: %d(%s) / neg: %d / cond: %d / push:%d\n", instr, il_commands_str[instr], mod_neg_ins, mod_cond, mod_push);
 
+        // JMP / other
         label_line = 0;
         bool lb = false;
         if (instr == IL_JMP) {
@@ -340,8 +343,10 @@ void compile_il(char *file) {
                 printf("ERROR: label (%s) not found\n", ln_ins[1]);
                 return;
             }
-            printf("    JMP: (%s) [%04lu]\n", labels[index].label, (long unsigned int) label_line);
+            DBG_PRINT("    JMP: (%s) [%04lu]\n", labels[index].label, (long unsigned int) label_line);
         } else {
+
+            // search arguments
             word = false;
             arg_byte = 0;
             arg_bit = 0;
@@ -389,14 +394,14 @@ void compile_il(char *file) {
 
                     arg_byte = atoi(ln_ins[0]);
                     arg_bit = atoi(ln_ins[1]);
-                    printf("    arg: (byte = %d / bit = %d)\n", arg_byte, arg_bit);
+                    DBG_PRINT("    arg: (byte = %d / bit = %d)\n", arg_byte, arg_bit);
                 } else {
                     word = true;
                     arg_word = atoi(ln);
-                    printf("    arg: (word = %d)\n", arg_word);
+                    DBG_PRINT("    arg: (word = %d)\n", arg_word);
                 }
             }
-            printf("    operand type: %d(%s) / neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
+            DBG_PRINT("    operand type: %d(%s) / neg: %d\n", operand, IlOperands[operand], mod_neg_arg);
         }
 
         // create op
@@ -423,21 +428,25 @@ void compile_il(char *file) {
             }
         }
 
-        printf("    OP: 0x%08x\n", code);
+        DBG_PRINT("    OP: 0x%08x\n", code);
         char bin[50] = "";
         to_binary(code, bin);
-        printf("    ----------------------------------------\n");
-        printf("           [        INSWORD2 (25)          ]\n");
-        printf("                 [      INSWORD1 (21)      ]\n");
-        printf("                        [   INSWORD0 (16)  ]\n");
-        printf("    [INSBYTE0][INSBYTE1][INSBYTE2][INSBYTE3]\n");
-        printf("    [IIIIICNP][RWGOOOOO][BBBBBBBB][TTTTTTTT]\n");
-        printf("    ----------------------------------------\n");
-        printf("    %s\n", bin);
-        printf("    ----------------------------------------\n");
-        printf("    < DECODE INSTR: ");
+        DBG_PRINT("    ----------------------------------------\n");
+        DBG_PRINT("           [        INSWORD2 (25)          ]\n");
+        DBG_PRINT("                 [      INSWORD1 (21)      ]\n");
+        DBG_PRINT("                        [   INSWORD0 (16)  ]\n");
+        DBG_PRINT("    [INSBYTE0][INSBYTE1][INSBYTE2][INSBYTE3]\n");
+        DBG_PRINT("    [IIIIICNP][RWGOOOOO][BBBBBBBB][TTTTTTTT]\n");
+        DBG_PRINT("    ----------------------------------------\n");
+        DBG_PRINT("    %s\n", bin);
+        DBG_PRINT("    ----------------------------------------\n");
+        DBG_PRINT("    < DECODE INSTR: ");
+#ifdef DEBUG
         dump_instr(code);
-        printf(" >\n////////////////////////////////////////////////\n");
+#endif
+        DBG_PRINT(" >\n////////////////////////////////////////////////\n");
+
+        // TODO: write code to file
     }
 
 }
