@@ -72,6 +72,21 @@
 #define SET_BIT_VAL(i, v)      (i = (i | (v & 0xFF)))
 #define SET_BYTE_VAL(i, v)     (i = (i | ((v & 0xff) << 8)))
 
+#define INSTRUCTION_DECODE(v, ins) \
+    v.instr      = ins;                 \
+    v.il         = IL(ins);             \
+    v.operand    = OPERAND(ins);        \
+    v.bit_cond   = BIT_COND(ins);       \
+    v.bit_nins   = BIT_NEGATE_INS(ins); \
+    v.bit_push   = BIT_PUSH(ins);       \
+    v.bit_return = BIT_RETURN(ins);     \
+    v.bit_narg   = BIT_NEGATE_ARG(ins); \
+    v.bit_word   = BIT_WORD(ins);       \
+    v.arg_byte   = INSBYTE2(ins);       \
+    v.arg_bit    = INSBYTE3(ins);       \
+    v.insword0   = INSWORD0(ins);       \
+    v.insword1   = INSWORD1(ins);       \
+    v.insword2   = INSWORD2(ins);
 
 typedef enum IL_COMMANDS {
 //   instr  //       | modifiers |  description

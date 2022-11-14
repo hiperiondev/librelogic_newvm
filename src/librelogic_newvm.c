@@ -90,29 +90,9 @@ typedef struct instr {
     uint32_t insword2;
 } instr_t;
 
-instr_t decode_instruction(uint32_t instr) {
-    instr_t result;
-
-    result.instr      = instr;                 //
-    result.il         = IL(instr);             //
-    result.operand    = OPERAND(instr);        //
-    result.bit_cond   = BIT_COND(instr);       //
-    result.bit_nins   = BIT_NEGATE_INS(instr); //
-    result.bit_push   = BIT_PUSH(instr);       //
-    result.bit_return = BIT_RETURN(instr);     //
-    result.bit_narg   = BIT_NEGATE_ARG(instr); //
-    result.bit_word   = BIT_WORD(instr);       //
-    result.arg_byte   = INSBYTE2(instr);       //
-    result.arg_bit    = INSBYTE3(instr);       //
-    result.insword0   = INSWORD0(instr);       //
-    result.insword1   = INSWORD1(instr);       //
-    result.insword2   = INSWORD2(instr);       //
-
-    return result;
-}
-
 void dump_instr(uint32_t instr) {
-    instr_t result = decode_instruction(instr);
+    instr_t result;
+    INSTRUCTION_DECODE(result, instr);
 
     printf("%s", il_commands_str[result.il]);
     if (result.bit_nins)
@@ -482,7 +462,7 @@ uint8_t vm_execute(uint32_t *vm_program, uint32_t prg_len) {
             &&_IL_CAL, &&_IL_HALT
     };
 #define DISPATCH() \
-    ins = decode_instruction(vm_program[pc]); \
+    INSTRUCTION_DECODE(ins, vm_program[pc]); \
     goto *dispatch_vm[IL(vm_program[pc++])]
 
     DISPATCH();
