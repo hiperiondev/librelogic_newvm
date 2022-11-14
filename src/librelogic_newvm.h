@@ -58,18 +58,20 @@
 #define BIT_WORD(x)        (x & 0x400000)
 #define BIT_NEGATE_ARG(x)  (x & 0x200000)
 
-#define SET_IL(i, v)       (i = (i | (v << 27)))
-#define SET_OPERAND(i, v)  (i = (i | (v << 16)))
-#define SET_COND(i)        (i = (i | 0x4000000))
-#define SET_NEGATE_INS(i)  (i = (i | 0x2000000))
-#define SET_PUSH(i)        (i = (i | 0x1000000))
-#define SET_RETURN(i)      (i = (i | 0x800000))
-#define SET_WORD(i)        (i = (i | 0x400000))
-#define SET_NEGATE_ARG(i)  (i = (i | 0x200000))
+#define SET_IL(i, v)           (i = (i | (v << 27)))
+#define SET_OPERAND(i, v)      (i = (i | (v << 16)))
+#define SET_COND(i)            (i = (i | 0x4000000))
+#define SET_NEGATE_INS(i)      (i = (i | 0x2000000))
+#define SET_PUSH(i)            (i = (i | 0x1000000))
+#define SET_RETURN(i)          (i = (i | 0x800000))
+#define SET_WORD(i)            (i = (i | 0x400000))
+#define SET_NEGATE_ARG(i)      (i = (i | 0x200000))
 #define SET_INSWORD0_VAL(i, v) (i = (i | (v & 0xFFFF)))
-#define SET_BIT_VAL(i, v) (i = (i | (v & 0xFF)))
-#define SET_BYTE_VAL(i, v)  (i = (i | ((v & 0xff) << 8)))
+#define SET_INSWORD1_VAL(i, v) (i = (i | INSWORD1(v)))
 #define SET_INSWORD2_VAL(i, v) (i = (i | INSWORD2(v)))
+#define SET_BIT_VAL(i, v)      (i = (i | (v & 0xFF)))
+#define SET_BYTE_VAL(i, v)     (i = (i | ((v & 0xff) << 8)))
+
 
 typedef enum IL_COMMANDS {
 //   instr  //       | modifiers |  description
@@ -86,15 +88,15 @@ typedef enum IL_COMMANDS {
     IL_SUB, //  0x0a |     (     |  Subtraction of the operand from the accumulator value; result is written into the accumulator.
     IL_MUL, //  0x0b |     (     |  Multiplication of accumulator value and operand; result is written into the accumulator.
     IL_DIV, //  0x0c |     (     |  Division of the accumulator value by the operand; result is written into the accumulator.
-    IL_GT,  //  0x0d |     (     |  Checks whether the accumulator value is greater than the operand value; write result (BOOL) into the accumulator.
-    IL_GE,  //  0x0e |     (     |  Checks whether the accumulator value is greater than or equal to the operand value; write result (BOOL) into the accumulator.
-    IL_EQ,  //  0x0f |     (     |  Checks whether the accumulator value is equal to the operand value; write result (BOOL) into the accumulator.
-    IL_NE,  //  0x10 |     (     |  Checks whether the accumulator value is not equal to the operand value; write result (BOOL) into the accumulator.
-    IL_LE,  //  0x11 |     (     |  Checks whether the accumulator value is smaller than or equal to the operand value; write result (BOOL) into the accumulator.
-    IL_LT,  //  0x12 |     (     |  Checks whether the accumulator value is smaller than the operand value; result (BOOL) is written into the accumulator.
+    IL_GT,  //  0x0d |     (     |  Accumulator value is greater than the operand value; write result (BOOL) into the accumulator.
+    IL_GE,  //  0x0e |     (     |  Accumulator value is greater than or equal to the operand value; write result (BOOL) into the accumulator.
+    IL_EQ,  //  0x0f |     (     |  Accumulator value is equal to the operand value; write result (BOOL) into the accumulator.
+    IL_NE,  //  0x10 |     (     |  Accumulator value is not equal to the operand value; write result (BOOL) into the accumulator.
+    IL_LE,  //  0x11 |     (     |  Accumulator value is smaller than or equal to the operand value; write result (BOOL) into the accumulator.
+    IL_LT,  //  0x12 |     (     |  Accumulator value is smaller than the operand value; result (BOOL) is written into the accumulator.
     IL_JMP, //  0x13 |    CN     |  Unconditional (conditional) jump to the specified jump label.
     IL_CAL, //  0x14 |    CN     |  (Conditional) call of a program or a function block (if the accumulator value is TRUE).
-    IL_POP, //  0x15 |           |  not defined.
+    IL_POP, //  0x15 |           |  pop.
     IL_16,  //  0x16 |           |  not defined.
     IL_17,  //  0x17 |           |  not defined.
     IL_18,  //  0x18 |           |  not defined.

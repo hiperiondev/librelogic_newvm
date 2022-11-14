@@ -599,6 +599,9 @@ uint8_t vm_execute(uint32_t *vm_program, uint32_t prg_len) {
 
 int main(void) {
     compile_il("test.il");
+    printf("\n--------------------------------\n");
+    printf("--------------------------------\n\n");
+    compile_il("test2.il");
 
     return EXIT_SUCCESS;
 }
